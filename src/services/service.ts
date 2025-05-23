@@ -1,16 +1,8 @@
-import { Midi } from "@tonejs/midi";
-import type { Note } from "@tonejs/midi/dist/Note";
 import * as Tone from "tone";
 import Circle from "./circle";
 import { norm, palette } from "./utils";
 import Ball from "./ball";
-
-export async function getNotes(path: string) {
-  const response = await fetch(path);
-  const buffer = await response.arrayBuffer();
-  const midi = new Midi(buffer);
-  return midi.tracks[0].notes;
-}
+import type { Note } from "@tonejs/midi/dist/Note";
 
 export default class CanvasService {
   static readonly SPEED = 1;
@@ -57,7 +49,7 @@ export default class CanvasService {
       const y = canvas.height / 2 + (CanvasService.BALL_RADIUS * 2 + 10) * i;
       return new Ball(
         [x, y],
-        [0, CanvasService.SPEED],
+        [CanvasService.SPEED * Math.random(), CanvasService.SPEED],
         CanvasService.BALL_RADIUS,
         palette[i % palette.length],
         this.context

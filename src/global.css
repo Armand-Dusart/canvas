@@ -1,0 +1,29 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: #1c1c1c;
+}
+
+canvas {
+  border: 1px solid black;
+}
+
+.content {
+  width: 100dvw;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #f0f0f0;
+  color: #ff0000;
+  border: 1px solid #ff0000;
+  cursor: pointer;
+}

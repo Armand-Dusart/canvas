@@ -1,12 +1,21 @@
-"use client";
+import React from "react";
+import { Midi } from "@tonejs/midi";
+
 import * as Tone from "tone";
 import { useEffect, useMemo, useState } from "react";
-import CanvasService, { getNotes } from "./service";
+import CanvasService from "./services/service";
 import type { Note } from "@tonejs/midi/dist/Note";
 
-const path = "/midi/Pirates of the Caribbean - He's a Pirate (1).mid";
+const path = "/midi/pirates.mid";
 
-export default function Page() {
+export async function getNotes(path: string) {
+  const response = await fetch(path);
+  const buffer = await response.arrayBuffer();
+  const midi = new Midi(buffer);
+  return midi.tracks[0].notes;
+}
+
+export default function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -31,7 +40,7 @@ export default function Page() {
 
   useEffect(() => {
     if (!service) return;
-    const start = async () => {
+    const start = () => {
       service.startAnimation();
     };
     start();
@@ -47,9 +56,9 @@ export default function Page() {
   }, [isPlaying]);
 
   return (
-    <div className="w-screen h-screen flex items-center justify-center bg-base-100">
+    <div className="content">
       <button
-        className="p-4 border text-red"
+        className="btn"
         onClick={async () => {
           if (isPlaying) {
           } else {
