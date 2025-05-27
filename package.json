@@ -10,9 +10,9 @@
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
-    "@tonejs/midi": "^2.0.28",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "@tonejs/midi": "^2.0.28",
     "tone": "^15.1.22"
   },
   "devDependencies": {

@@ -33,7 +33,7 @@ export default function App() {
 
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
     if (!canvas) return;
-    const service = new CanvasService(2, canvas, notes);
+    const service = new CanvasService(5, canvas, notes);
 
     return service;
   }, [notes]);

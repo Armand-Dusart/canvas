@@ -31,11 +31,38 @@ export default class Ball {
   }
 
   draw() {
+    //todo ajouter une traine et une ombre et un dégradé
+    //todo pour le debug ajouter une visualisation du vecteur vélocité
     this.context.beginPath();
+    const gradient = this.context.createRadialGradient(
+      this.x,
+      this.y,
+      0,
+      this.x,
+      this.y,
+      this.radius
+    );
+    gradient.addColorStop(0, this.color); // centre violet vif
+    gradient.addColorStop(1, `color-mix(in oklch, ${this.color}, white 50%) `); // transparent vers l’extérieur
+
     this.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    this.context.fillStyle = this.color;
+    this.context.fillStyle = gradient;
+
+    this.context.fillStyle = gradient; // Utiliser le dégradé pour le remplissage
+
     this.context.fill();
     this.context.closePath();
+
+    //vecteur vélocité
+    if (CanvasService.DEBUG) {
+      this.context.beginPath();
+      this.context.moveTo(this.x, this.y);
+      this.context.lineTo(this.x + this.dx * 10, this.y + this.dy * 10);
+      this.context.strokeStyle = "red";
+      this.context.lineWidth = 1;
+      this.context.stroke();
+      this.context.closePath();
+    }
   }
 
   getPosition() {

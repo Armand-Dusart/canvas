@@ -61,6 +61,38 @@ export default class Circle {
     this.context.lineWidth = 3;
     this.context.stroke();
     this.context.closePath();
+
+    if (CanvasService.DEBUG) {
+      const { a, b } = this.getAndB();
+      this.context.beginPath();
+      this.context.arc(a[0], a[1], 4, 0, Math.PI * 2);
+      this.context.fillStyle = "green";
+      this.context.fill();
+      this.context.closePath();
+      this.context.beginPath();
+      this.context.arc(b[0], b[1], 4, 0, Math.PI * 2);
+      this.context.fillStyle = "green";
+      this.context.fill();
+      this.context.closePath();
+
+      const { vA, vB } = this.getVelocities();
+      const m = 5;
+      this.context.beginPath();
+      this.context.moveTo(a[0], a[1]);
+      this.context.lineTo(a[0] + vA[0] * m, a[1] + vA[1] * m);
+      this.context.strokeStyle = "red";
+      this.context.lineWidth = 1;
+      this.context.stroke();
+      this.context.closePath();
+
+      this.context.beginPath();
+      this.context.moveTo(b[0], b[1]);
+      this.context.lineTo(b[0] + vB[0] * m, b[1] + vB[1] * m);
+      this.context.strokeStyle = "red";
+      this.context.lineWidth = 1;
+      this.context.stroke();
+      this.context.closePath();
+    }
   }
 
   collision(x: number, y: number, dx: number, dy: number) {
@@ -85,7 +117,7 @@ export default class Circle {
     // histoire de faire rebondir plus vite en fonction de la taille du cercle
     const maxRadius =
       CanvasService.START_RADIUS + CanvasService.LEN * CanvasService.SPACING;
-    const multiplier = 1 + (this.radius / maxRadius) * 0.05;
+    const multiplier = 1 + (this.radius / maxRadius) * 0.1;
     return { dx: vNew[0] * multiplier, dy: vNew[1] * multiplier };
   }
 
@@ -115,16 +147,25 @@ export default class Circle {
     const speed = this.getSpeed();
 
     // Fonction pour calculer un vecteur vitesse tangent
-    const tangent = ([x, y]: number[]) => {
-      // Calculer la norme du vecteur (x, y).
-      const norm = Math.sqrt(x * x + y * y);
-      // Choisir le sens (ici on prend [-y, -x] pour le sens horaire)
-      return [(-y / norm) * speed, (-x / norm) * speed];
+    const velocity = ([x, y]: number[]): [number, number] => {
+      // Vecteur position du point par rapport au centre
+      const dx = x - this.center[0];
+      const dy = y - this.center[1];
+      const norm = Math.sqrt(dx * dx + dy * dy);
+      if (norm === 0) return [0, 0]; // Éviter la division par zéro
+      // Vecteur unitaire
+      const unitX = dx / norm;
+      const unitY = dy / norm;
+      // Vecteur tangent (perpendiculaire)
+      const tangentX = -unitY; // Inverser les coordonnées pour obtenir la tangente
+      const tangentY = unitX;
+      // Vecteur vitesse
+      return [tangentX * speed, tangentY * speed];
     };
 
     return {
-      vA: tangent(a),
-      vB: tangent(b),
+      vA: velocity(a),
+      vB: velocity(b),
     };
   }
 
@@ -133,6 +174,7 @@ export default class Circle {
   }
 
   deviate(x: number, y: number, dx: number, dy: number) {
+    //todo probleme lorsque la balle roule sur le cercle
     const { a, b } = this.getAndB();
     const ball: [number, number] = [x, y];
     const dA = norm(a, ball);
@@ -189,7 +231,7 @@ export default class Circle {
     }
 
     const distanceAB = norm(a, b);
-
+    //todo faire avec l'angle
     if (distanceAB > distanceAC && distanceAB > distanceBC) {
       return "pass";
     }
@@ -208,7 +250,6 @@ export default class Circle {
 
     if (d >= this.radius) {
       const action = this.action(x, y, r);
-      console.log(action);
       switch (action) {
         case "pass":
           return { dx: dx, dy: dy, action: "pass" };

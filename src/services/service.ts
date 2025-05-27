@@ -5,15 +5,16 @@ import Ball from "./ball";
 import type { Note } from "@tonejs/midi/dist/Note";
 
 export default class CanvasService {
-  static readonly SPEED = 1;
-  static readonly SPEED_MAX = 5;
-  static readonly GRAVITY = CanvasService.SPEED / 75;
-  static readonly LEN = 35;
+  static readonly SPEED = 5;
+  static readonly SPEED_MAX = 6;
+  static readonly GRAVITY = CanvasService.SPEED / 60;
+  static readonly LEN = 30;
   static readonly START_RADIUS = 100;
   static readonly SPACING = 10;
   static readonly BALL_RADIUS = 10;
+  static readonly DEBUG = false;
   //radians
-  static readonly ROTATION_SPEED = 0.001;
+  static readonly ROTATION_SPEED = 0.006;
 
   private canvas: HTMLCanvasElement;
   private context: CanvasRenderingContext2D;
@@ -24,13 +25,14 @@ export default class CanvasService {
   private circles: Circle[];
   private notes: Note[];
   private currentNoteIndex: number;
+  private noteTimer: number | null = null;
 
   private _resume: boolean;
 
   playNote(note: Note) {
     //MembraneSynth
     // Synthé principal type "cordes épiques"
-    const mainSynth = new Tone.MembraneSynth();
+    const mainSynth = new Tone.Synth();
 
     // Effets cinéma
     const reverb = new Tone.Reverb({ decay: 4, wet: 0.5 });
@@ -71,13 +73,20 @@ export default class CanvasService {
       circle.on("collision", () => {
         const note = this.notes[this.currentNoteIndex];
         if (note) {
+          if (this.noteTimer) {
+            return;
+          }
           this.playNote(note);
+          this.noteTimer = setTimeout(() => {
+            this.noteTimer = null;
+          }, 3600 / 120); // 120 BPM
           this.currentNoteIndex =
             (this.currentNoteIndex + 1) % this.notes.length;
         }
       });
 
       circle.on("destroy", () => {
+        //ajouter une note et une animation de destruction
         this.circles = this.circles.filter((c) => c.radius !== r);
       });
 
@@ -86,6 +95,8 @@ export default class CanvasService {
     this.currentNoteIndex = 0;
     this.notes = notes;
     this._resume = false;
+
+    this.drawGrid();
   }
 
   public pause() {
@@ -100,7 +111,7 @@ export default class CanvasService {
 
     for (let x = 0; x < this.canvas.width; x += gridSize) {
       const isCenter = x === this.canvas.width / 2;
-      this.context.strokeStyle = isCenter ? "red" : "lightgray";
+      this.context.strokeStyle = isCenter ? "#c4cdf9" : "lightgray";
       this.context.lineWidth = isCenter ? 2 : 0.5;
       this.context.beginPath();
       this.context.moveTo(x, 0);
@@ -110,7 +121,7 @@ export default class CanvasService {
     }
     for (let y = 0; y < this.canvas.height; y += gridSize) {
       const isCenter = y === this.canvas.width / 2;
-      this.context.strokeStyle = isCenter ? "red" : "lightgray";
+      this.context.strokeStyle = isCenter ? "#c4cdf9" : "lightgray";
       this.context.lineWidth = isCenter ? 2 : 0.5;
       this.context.beginPath();
       this.context.moveTo(0, y);
@@ -121,6 +132,7 @@ export default class CanvasService {
   }
 
   private ajustPosition(ball: Ball) {
+    console.log("ajustPosition", ball.getPosition());
     const position = ball.getPosition();
     const r = this.circles[0];
     if (r) {
@@ -168,7 +180,10 @@ export default class CanvasService {
 
       let action = "pass";
       if (r) {
-        ({ dx, dy, action } = r.checkCollision(x, y, dx, dy, ball.radius));
+        const res = r.checkCollision(x, y, dx, dy, ball.radius);
+        action = res.action;
+        dy = res.dy;
+        dx = res.dx;
       }
 
       if (x + ball.radius > this.canvas.width || x - ball.radius < 0) {
@@ -187,8 +202,8 @@ export default class CanvasService {
       if (collision) {
         this.collision(ball, collision);
       }
-
-      if (action !== "pass") {
+      const ajust = action !== "pass";
+      if (ajust) {
         this.ajustPosition(ball);
       }
 
@@ -226,7 +241,8 @@ export default class CanvasService {
     const dist2 = dx * dx + dy * dy;
 
     if (dist2 === 0) {
-      return { vA_: vA, vB_: vB }; // éviter division par 0
+      console.warn("Collision with zero distance, skipping correction.");
+      return;
     }
 
     const factor = dotProduct / dist2;
@@ -249,9 +265,15 @@ export default class CanvasService {
       this.draw();
       requestAnimationFrame(animate);
     };
-    // setInterval(() => {
-    //   const animationId = animate();
-    // }, 1000); // 60 FPS
-    const animationId = animate();
+
+    animate();
+  }
+
+  public stopAnimation() {
+    if (this.noteTimer) {
+      clearTimeout(this.noteTimer);
+      this.noteTimer = null;
+    }
+    this._resume = false;
   }
 }
